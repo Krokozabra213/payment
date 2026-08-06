@@ -13,7 +13,7 @@ jobs:
   build_and_publish:
     runs-on: ubuntu-latest
     env:
-      SERVICE_NAME: payment-service
+      SERVICE_NAME: payment
 
     steps:
       - name: Checkout source repository
@@ -77,10 +77,10 @@ jobs:
           git config user.email "github-actions@github.com"
           git config user.name "github-actions"
 
-          sed -i "s|^\([[:space:]]*image:\).*|\1 $SERVICE_IMAGE|" dev/${SERVICE_NAME}.yaml
-          sed -i "s|^\([[:space:]]*image:\).*|\1 $MIGRATE_IMAGE|" dev/${SERVICE_NAME}-migrate-job.yaml
+          sed -i "s|^\([[:space:]]*image:\).*|\1 $SERVICE_IMAGE|" dev/${SERVICE_NAME}/${SERVICE_NAME}.yaml
+          sed -i "s|^\([[:space:]]*image:\).*|\1 $MIGRATE_IMAGE|" dev/${SERVICE_NAME}/migrate-job.yaml
 
-          git add dev/${SERVICE_NAME}.yaml dev/${SERVICE_NAME}-migrate-job.yaml
+          git add dev/${SERVICE_NAME}/${SERVICE_NAME}.yaml dev/${SERVICE_NAME}/migrate-job.yaml
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
