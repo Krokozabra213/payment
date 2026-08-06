@@ -62,7 +62,7 @@ jobs:
       - name: Checkout manifests repository
         uses: actions/checkout@v4
         with:
-          repository: GargantuaLabs/gargantua_manifests
+          repository: Krokozabra213/gargantua_manifests
           ref: main
           token: ${{ secrets.MANIFESTS_TOKEN }}
           path: manifests-repo
