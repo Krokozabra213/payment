@@ -64,7 +64,7 @@ jobs:
         with:
           repository: GargantuaLabs/gargantua_manifests
           ref: main
-          ssh-key: ${{ secrets.MANIFESTS_TOKEN }}
+          token: ${{ secrets.MANIFESTS_TOKEN }}
           path: manifests-repo
 
       - name: Update manifest and push
