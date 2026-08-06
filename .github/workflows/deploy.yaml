@@ -1,0 +1,94 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build_and_publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      SERVICE_NAME: payment-service
+
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+
+      - name: Get short SHA
+        id: vars
+        run: echo "SHA_SHORT=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_OUTPUT
+
+      - name: Set image names
+        id: image
+        run: |
+          SHA_SHORT=${{ steps.vars.outputs.SHA_SHORT }}
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+
+          SERVICE_IMAGE=ghcr.io/${OWNER}/${SERVICE_NAME}:${SHA_SHORT}
+          MIGRATE_IMAGE=ghcr.io/${OWNER}/${SERVICE_NAME}-migrate:${SHA_SHORT}
+
+          echo "SERVICE_IMAGE=$SERVICE_IMAGE" >> $GITHUB_OUTPUT
+          echo "MIGRATE_IMAGE=$MIGRATE_IMAGE" >> $GITHUB_OUTPUT
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push service image
+        run: |
+          docker build \
+            -t ${{ steps.image.outputs.SERVICE_IMAGE }} \
+            .
+
+          docker push ${{ steps.image.outputs.SERVICE_IMAGE }}
+
+      - name: Build and push migrate image
+        run: |
+          docker build \
+            -f Migrate.Dockerfile \
+            -t ${{ steps.image.outputs.MIGRATE_IMAGE }} \
+            .
+
+          docker push ${{ steps.image.outputs.MIGRATE_IMAGE }}
+
+      - name: Checkout manifests repository
+        uses: actions/checkout@v4
+        with:
+          repository: GargantuaLabs/manifests-dev
+          ref: main
+          ssh-key: ${{ secrets.MANIFESTS_TOKEN }}
+          path: manifests-repo
+
+      - name: Update manifest and push
+        run: |
+          SERVICE_IMAGE=${{ steps.image.outputs.SERVICE_IMAGE }}
+          MIGRATE_IMAGE=${{ steps.image.outputs.MIGRATE_IMAGE }}
+
+          cd manifests-repo
+
+          git config user.email "github-actions@github.com"
+          git config user.name "github-actions"
+
+          sed -i "s|^\([[:space:]]*image:\).*|\1 $SERVICE_IMAGE|" dev/${SERVICE_NAME}.yaml
+          sed -i "s|^\([[:space:]]*image:\).*|\1 $MIGRATE_IMAGE|" dev/${SERVICE_NAME}-migrate-job.yaml
+
+          git add dev/${SERVICE_NAME}.yaml dev/${SERVICE_NAME}-migrate-job.yaml
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Update image to $SERVICE_IMAGE"
+          git push

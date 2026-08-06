@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+      branches:
+        - main
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.25
+
+      - name: Run unit tests
+        run: make test
+
+      - name: Build
+        run: go build -o payment ./cmd/payment
+
+  integration:
+    runs-on: ubuntu-latest
+
+    steps:
+        - uses: actions/checkout@v4
+
+        - uses: actions/setup-go@v6
+          with:
+            go-version: 1.25
+
+        - name: Start test containers
+          run: make docker-test-up
+
+        - name: Wait for Postgres
+          run: |
+            docker compose ps
+            until docker compose exec -T test-postgres pg_isready -U postgres > /dev/null 2>&1; do
+              echo "Waiting for Postgres..."
+              sleep 2
+            done
+
+        - name: Run integration tests
+          run: make test-integration
+
+        - name: Dump docker compose logs on failure
+          if: failure()
+          run: docker compose logs --no-color
+
+        - name: Stop test containers
+          if: always()
+          run: make docker-test-down

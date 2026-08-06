@@ -1,0 +1,58 @@
+app:
+  name: 'payments'
+  version: 'v1.0.0'
+
+http:
+  host: '0.0.0.0'
+  port: '8080'
+  readTimeout: '10s'
+  writeTimeout: '10s'
+  maxHeaderBytes: 1
+  bodyLimitBytes: 4
+  allowedOrigins:
+    - 'http://localhost:3000'
+    - 'http://localhost:5173'
+
+grpc:
+  host: '0.0.0.0'
+  port: '44050'
+  readTimeout: '10s'
+  writeTimeout: '10s'
+  maxHeaderBytes: 1
+
+postgres:
+  sslMode: 'disable'
+  connectTimeout: '5s'
+  maxConns: 20
+  minConns: 2
+
+slog:
+  structured: true
+  level: -4
+
+tinkoff:
+  timeout: '10s'
+  base_url: 'https://securepay.tinkoff.ru/v2'
+  redirect_timeout: '30m'
+  max_idle_conns: 100
+  max_idle_conns_per_host: 10
+  idle_conn_timeout: '90s'
+
+telegram:
+  base_url: 'https://api.telegram.org/bot'
+  timeout: '10s'
+  max_idle_conns: 100
+  max_idle_conns_per_host: 10
+  idle_conn_timeout: '90s'
+
+telemetry:
+  logs: true
+  metrics: true
+  traces: true
+  endpoint: otel-collector:4317
+  tracesSampleRate: 1.0
+  logToStdout: true
+  stdoutLogLevel: -4
+  sampleLogs: true
+  unsampledLogLevel: 0
+  insecure: true
