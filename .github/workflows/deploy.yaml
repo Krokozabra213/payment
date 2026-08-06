@@ -65,7 +65,7 @@ jobs:
       - name: Checkout manifests repository
         uses: actions/checkout@v4
         with:
-          repository: GargantuaLabs/manifests-dev
+          repository: GargantuaLabs/gargantua_manifests
           ref: main
           ssh-key: ${{ secrets.MANIFESTS_TOKEN }}
           path: manifests-repo
