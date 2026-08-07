@@ -19,6 +19,9 @@ RUN apt-get update \
     && apt-get install -y ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+COPY russian_trusted_root_ca.crt /usr/local/share/ca-certificates/
+RUN update-ca-certificates
+
 WORKDIR /app
 COPY --from=build /payment .
 
