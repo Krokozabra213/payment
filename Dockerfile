@@ -15,6 +15,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /payment ./cmd/payment
 
 FROM alpine:3.23
 
+RUN apk add --no-cache ca-certificates
+
 WORKDIR /app
 COPY --from=build /payment .
 
