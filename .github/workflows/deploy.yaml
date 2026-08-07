@@ -31,9 +31,11 @@ jobs:
 
           SERVICE_IMAGE=ghcr.io/${OWNER}/${SERVICE_NAME}:${SHA_SHORT}
           MIGRATE_IMAGE=ghcr.io/${OWNER}/${SERVICE_NAME}-migrate:${SHA_SHORT}
+          SYNC_CRON_IMAGE=ghcr.io/${OWNER}/${SERVICE_NAME}-sync:${SHA_SHORT}
 
           echo "SERVICE_IMAGE=$SERVICE_IMAGE" >> $GITHUB_OUTPUT
           echo "MIGRATE_IMAGE=$MIGRATE_IMAGE" >> $GITHUB_OUTPUT
+          echo "SYNC_CRON_IMAGE=$SYNC_CRON_IMAGE" >> $GITHUB_OUTPUT
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -59,6 +61,15 @@ jobs:
 
           docker push ${{ steps.image.outputs.MIGRATE_IMAGE }}
 
+      - name: Build and push sync cronjob image
+        run: |
+          docker build \
+            -f sync.Dockerfile \
+            -t ${{ steps.image.outputs.SYNC_CRON_IMAGE }} \
+            .
+
+          docker push ${{ steps.image.outputs.SYNC_CRON_IMAGE }}
+
       - name: Checkout manifests repository
         uses: actions/checkout@v4
         with:
@@ -71,6 +82,7 @@ jobs:
         run: |
           SERVICE_IMAGE=${{ steps.image.outputs.SERVICE_IMAGE }}
           MIGRATE_IMAGE=${{ steps.image.outputs.MIGRATE_IMAGE }}
+          SYNC_CRON_IMAGE=${{ steps.image.outputs.SYNC_CRON_IMAGE }}
 
           cd manifests-repo
 
@@ -79,8 +91,9 @@ jobs:
 
           sed -i "s|^\([[:space:]]*image:\).*|\1 $SERVICE_IMAGE|" dev/${SERVICE_NAME}/${SERVICE_NAME}.yaml
           sed -i "s|^\([[:space:]]*image:\).*|\1 $MIGRATE_IMAGE|" dev/${SERVICE_NAME}/migrate-job.yaml
+          sed -i "s|^\([[:space:]]*image:\).*|\1 SYNC_CRON_IMAGE|" dev/${SERVICE_NAME}/migrate-job.yaml
 
-          git add dev/${SERVICE_NAME}/${SERVICE_NAME}.yaml dev/${SERVICE_NAME}/migrate-job.yaml
+          git add dev/${SERVICE_NAME}/${SERVICE_NAME}.yaml dev/${SERVICE_NAME}/sync-cronjob.yaml
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
