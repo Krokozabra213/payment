@@ -91,9 +91,9 @@ jobs:
 
           sed -i "s|^\([[:space:]]*image:\).*|\1 $SERVICE_IMAGE|" dev/${SERVICE_NAME}/${SERVICE_NAME}.yaml
           sed -i "s|^\([[:space:]]*image:\).*|\1 $MIGRATE_IMAGE|" dev/${SERVICE_NAME}/migrate-job.yaml
-          sed -i "s|^\([[:space:]]*image:\).*|\1 SYNC_CRON_IMAGE|" dev/${SERVICE_NAME}/migrate-job.yaml
+          sed -i "s|^\([[:space:]]*image:\).*|\1 $SYNC_CRON_IMAGE|" dev/${SERVICE_NAME}/sync-cronjob.yaml
 
-          git add dev/${SERVICE_NAME}/${SERVICE_NAME}.yaml dev/${SERVICE_NAME}/sync-cronjob.yaml
+          git add dev/${SERVICE_NAME}/${SERVICE_NAME}.yaml dev/${SERVICE_NAME}/migrate-job.yaml dev/${SERVICE_NAME}/sync-cronjob.yaml
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
